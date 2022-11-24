@@ -1,6 +1,9 @@
 import datetime
 import discord
+import os
+from decouple import config
 from discord.ext import commands, tasks
+from discord.ext.commands.errors import MissingRequiredArgument, CommandNotFound
 
 intents = discord.Intents.all()
 intents.members = True
@@ -10,7 +13,6 @@ bot = commands.Bot(command_prefix='!',intents=intents)
 @bot.event
 async def on_ready():
     print("Conectado!")
-    current_time.start()
     
 # boas vindas
 @bot.event
@@ -46,15 +48,16 @@ Aqui você encontra o link de todas as nossas redes, newsletter, e etc: https://
     """
     
     await boas_vindas.send(message)
-    
-# !oi
-@bot.command(name="oi")
-async def send_hello(ctx):
-    name = ctx.author.name
-    
-    response = "Olá, " + name
-    
-    await ctx.send(response)
+   
+# verifica comandos errados
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, MissingRequiredArgument):
+        await ctx.send("Favor enviar todos os argumentos. Digite !help para ver os parâmetros de cada comando.")
+    if isinstance(error, CommandNotFound):
+        await ctx.send("O comando não existe... Digite !help para ver todos os comandos!")
+    else:
+        raise error
     
 # !regras
 @bot.command(name="regras")
@@ -69,6 +72,18 @@ async def rules(ctx):
     """
     
     await ctx.send(response)
+  
+# !segredo
+@bot.command(name="segredo", help="Envia um segredo no privado (não requer argumento)")
+async def secret(ctx):
+    try:
+        await ctx.author.send("Ei, psiu!")
+        await ctx.author.send("Siga nossa página do Twitter @ViUmaVaga :ballot_box_with_check:")
+        await ctx.author.send("Assine nossa newsletter :ballot_box_with_check:")
+        await ctx.author.send("Convide alguém para nossa comunidade :ballot_box_with_check:")
+        await ctx.author.send("Espalhe esse segredo... :face_with_hand_over_mouth:")
+    except discord.errors.Forbidden:
+        await ctx.send("Não posso te contar o segredo, habilite receber mensagens de qualquer pessoa do servidor (Opções > Privacidade)")
     
 # verifica palavrões
 @bot.event
@@ -84,17 +99,7 @@ async def on_message(message):
         await message.delete()
         
     await bot.process_commands(message)
-    
-# data-hora (a cada 10 segundos)
-@tasks.loop(seconds=10)
-async def current_time():
-    now = datetime.datetime.now()
-    
-    now = now.strftime("%d/%m/%Y às %H:%M:%S")
-    
-    channel = bot.get_channel(1045158430199001151)
-    
-    await channel.send("Data atual: " + now)
 
 # token do bot
-bot.run('MTA0NTE1MDAwMjA4OTA0MTk2MQ.GwJG1Z.ApvTcCL_tNtgvcn2QzxarEpX3KTxbDoz3TKlpM')
+TOKEN = config("TOKEN")
+bot.run(TOKEN)
