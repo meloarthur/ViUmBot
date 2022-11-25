@@ -67,4 +67,3 @@ Aqui você encontra o link de todas as nossas redes, newsletter, e etc: https://
         
 async def setup(bot):
     await bot.add_cog(Manager(bot))
-        
